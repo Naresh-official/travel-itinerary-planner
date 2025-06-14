@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { Plus, Calendar } from "lucide-react"
+import { Plus, Calendar, AlertCircle } from "lucide-react"
 import TripCard from "./TripCard"
 import TripForm from "./TripForm"
 import { getTrips, createTrip } from "../services/api"
@@ -10,6 +10,7 @@ export default function TripDashboard() {
   const [trips, setTrips] = useState([])
   const [showForm, setShowForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchTrips()
@@ -17,10 +18,13 @@ export default function TripDashboard() {
 
   const fetchTrips = async () => {
     try {
+      setLoading(true)
+      setError(null)
       const data = await getTrips()
       setTrips(data)
     } catch (error) {
       console.error("Error fetching trips:", error)
+      setError(error.message)
     } finally {
       setLoading(false)
     }
@@ -28,11 +32,13 @@ export default function TripDashboard() {
 
   const handleCreateTrip = async (tripData) => {
     try {
+      setError(null)
       const newTrip = await createTrip(tripData)
-      setTrips([...trips, newTrip])
+      setTrips([newTrip, ...trips])
       setShowForm(false)
     } catch (error) {
       console.error("Error creating trip:", error)
+      setError(error.message)
     }
   }
 
@@ -65,7 +71,20 @@ export default function TripDashboard() {
           </button>
         </div>
 
-        {trips.length === 0 ? (
+        {error && (
+          <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
+            <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+            <span className="text-red-700">{error}</span>
+            <button
+              onClick={fetchTrips}
+              className="ml-auto px-3 py-1 bg-red-600 text-white text-sm rounded hover:bg-red-700 transition-colors"
+            >
+              Retry
+            </button>
+          </div>
+        )}
+
+        {trips.length === 0 && !error ? (
           <div className="text-center py-16">
             <div className="bg-white p-8 rounded-lg shadow-md max-w-md mx-auto">
               <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
@@ -83,7 +102,7 @@ export default function TripDashboard() {
         ) : (
           <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
             {trips.map((trip) => (
-              <TripCard key={trip.id} trip={trip} />
+              <TripCard key={trip._id} trip={{ ...trip, id: trip._id }} />
             ))}
           </div>
         )}

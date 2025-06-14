@@ -1,276 +1,141 @@
-// Mock API service using dummy data
-// In a real application, these would be actual HTTP requests using axios
+import api from './axios';
 
-const mockTrips = [
-  {
-    id: 1,
-    name: "Summer Europe Adventure",
-    description: "A 2-week journey through the best of Europe",
-    startDate: "2024-07-01",
-    endDate: "2024-07-14",
-    destinations: [
-      {
-        id: 1,
-        name: "Paris, France",
-        location: "Paris, France",
-        description: "The City of Light",
-        arrivalDate: "2024-07-01",
-        departureDate: "2024-07-05",
-        activities: [
-          {
-            id: 1,
-            name: "Visit Eiffel Tower",
-            description: "Iconic tower visit with sunset views",
-            location: "Champ de Mars, Paris",
-            date: "2024-07-02",
-            time: "18:00",
-            duration: "2 hours",
-            cost: 25,
-          },
-          {
-            id: 2,
-            name: "Louvre Museum",
-            description: "World's largest art museum",
-            location: "Rue de Rivoli, Paris",
-            date: "2024-07-03",
-            time: "10:00",
-            duration: "4 hours",
-            cost: 17,
-          },
-        ],
-        accommodations: [
-          {
-            id: 1,
-            name: "Hotel Le Marais",
-            description: "Boutique hotel in historic district",
-            location: "Le Marais, Paris",
-            type: "hotel",
-            checkIn: "2024-07-01",
-            checkOut: "2024-07-05",
-            cost: 120,
-          },
-        ],
-        transport: [
-          {
-            id: 1,
-            name: "Flight to Paris",
-            description: "Direct flight from JFK",
-            type: "flight",
-            from: "New York JFK",
-            to: "Paris CDG",
-            date: "2024-07-01",
-            time: "08:00",
-            duration: "7h 30m",
-            cost: 650,
-          },
-        ],
-      },
-      {
-        id: 2,
-        name: "Rome, Italy",
-        location: "Rome, Italy",
-        description: "The Eternal City",
-        arrivalDate: "2024-07-05",
-        departureDate: "2024-07-09",
-        activities: [
-          {
-            id: 3,
-            name: "Colosseum Tour",
-            description: "Ancient amphitheater guided tour",
-            location: "Piazza del Colosseo, Rome",
-            date: "2024-07-06",
-            time: "09:00",
-            duration: "3 hours",
-            cost: 35,
-          },
-        ],
-        accommodations: [
-          {
-            id: 2,
-            name: "Roma Central Hotel",
-            description: "Modern hotel near Termini Station",
-            location: "Via Nazionale, Rome",
-            type: "hotel",
-            checkIn: "2024-07-05",
-            checkOut: "2024-07-09",
-            cost: 95,
-          },
-        ],
-        transport: [
-          {
-            id: 2,
-            name: "Train to Rome",
-            description: "High-speed train from Paris",
-            type: "train",
-            from: "Paris Gare de Lyon",
-            to: "Roma Termini",
-            date: "2024-07-05",
-            time: "14:30",
-            duration: "11h 15m",
-            cost: 89,
-          },
-        ],
-      },
-    ],
-  },
-  {
-    id: 2,
-    name: "Japan Discovery",
-    description: "Exploring traditional and modern Japan",
-    startDate: "2024-09-15",
-    endDate: "2024-09-28",
-    destinations: [
-      {
-        id: 3,
-        name: "Tokyo, Japan",
-        location: "Tokyo, Japan",
-        description: "Bustling metropolis",
-        arrivalDate: "2024-09-15",
-        departureDate: "2024-09-22",
-        activities: [],
-        accommodations: [],
-        transport: [],
-      },
-    ],
-  },
-]
-
-let nextId = 4
-
-// Simulate API delay
-const delay = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
-
+// Trip API functions
 export const getTrips = async () => {
-  await delay(500)
-  return mockTrips
-}
+  try {
+    const response = await api.get('/trips');
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching trips:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch trips');
+  }
+};
 
 export const getTripById = async (id) => {
-  await delay(300)
-  const trip = mockTrips.find((t) => t.id === Number.parseInt(id))
-  if (!trip) {
-    throw new Error("Trip not found")
+  try {
+    const response = await api.get(`/trips/${id}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching trip:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch trip');
   }
-  return trip
-}
+};
 
 export const createTrip = async (tripData) => {
-  await delay(400)
-  const newTrip = {
-    id: nextId++,
-    ...tripData,
-    destinations: [],
+  try {
+    const response = await api.post('/trips', {
+      name: tripData.name,
+      startDate: tripData.startDate,
+      endDate: tripData.endDate,
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error('Error creating trip:', error);
+    throw new Error(error.response?.data?.message || 'Failed to create trip');
   }
-  mockTrips.push(newTrip)
-  return newTrip
-}
+};
 
 export const addDestination = async (tripId, destinationData) => {
-  await delay(300)
-  const trip = mockTrips.find((t) => t.id === Number.parseInt(tripId))
-  if (!trip) {
-    throw new Error("Trip not found")
+  try {
+    const response = await api.post(`/trips/${tripId}/destinations`, {
+      location: destinationData.name,
+      arrivalDate: destinationData.arrivalDate,
+      departureDate: destinationData.departureDate,
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error('Error adding destination:', error);
+    throw new Error(error.response?.data?.message || 'Failed to add destination');
   }
+};
 
-  const newDestination = {
-    id: nextId++,
-    ...destinationData,
-    activities: [],
-    accommodations: [],
-    transport: [],
-  }
-
-  if (!trip.destinations) {
-    trip.destinations = []
-  }
-  trip.destinations.push(newDestination)
-
-  return newDestination
-}
-
+// Destination API functions
 export const addActivity = async (destinationId, activityData) => {
-  await delay(300)
-
-  // Find the destination across all trips
-  let destination = null
-  for (const trip of mockTrips) {
-    if (trip.destinations) {
-      destination = trip.destinations.find((d) => d.id === Number.parseInt(destinationId))
-      if (destination) break
-    }
+  try {
+    const response = await api.post(`/destinations/${destinationId}/activities`, {
+      title: activityData.name,
+      time: new Date(`${activityData.date}T${activityData.time}`).toISOString(),
+      notes: activityData.description || '',
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error('Error adding activity:', error);
+    throw new Error(error.response?.data?.message || 'Failed to add activity');
   }
-
-  if (!destination) {
-    throw new Error("Destination not found")
-  }
-
-  const newActivity = {
-    id: nextId++,
-    ...activityData,
-  }
-
-  if (!destination.activities) {
-    destination.activities = []
-  }
-  destination.activities.push(newActivity)
-
-  return newActivity
-}
+};
 
 export const addAccommodation = async (destinationId, accommodationData) => {
-  await delay(300)
-
-  // Find the destination across all trips
-  let destination = null
-  for (const trip of mockTrips) {
-    if (trip.destinations) {
-      destination = trip.destinations.find((d) => d.id === Number.parseInt(destinationId))
-      if (destination) break
-    }
+  try {
+    const response = await api.post(`/destinations/${destinationId}/accommodations`, {
+      placeName: accommodationData.name,
+      checkIn: new Date(accommodationData.checkIn).toISOString(),
+      checkOut: new Date(accommodationData.checkOut).toISOString(),
+      notes: accommodationData.description || '',
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error('Error adding accommodation:', error);
+    throw new Error(error.response?.data?.message || 'Failed to add accommodation');
   }
-
-  if (!destination) {
-    throw new Error("Destination not found")
-  }
-
-  const newAccommodation = {
-    id: nextId++,
-    ...accommodationData,
-  }
-
-  if (!destination.accommodations) {
-    destination.accommodations = []
-  }
-  destination.accommodations.push(newAccommodation)
-
-  return newAccommodation
-}
+};
 
 export const addTransport = async (destinationId, transportData) => {
-  await delay(300)
-
-  // Find the destination across all trips
-  let destination = null
-  for (const trip of mockTrips) {
-    if (trip.destinations) {
-      destination = trip.destinations.find((d) => d.id === Number.parseInt(destinationId))
-      if (destination) break
-    }
+  try {
+    const response = await api.post(`/destinations/${destinationId}/transport`, {
+      type: transportData.type,
+      details: transportData.name,
+      time: new Date(`${transportData.date}T${transportData.time}`).toISOString(),
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error('Error adding transport:', error);
+    throw new Error(error.response?.data?.message || 'Failed to add transport');
   }
+};
 
-  if (!destination) {
-    throw new Error("Destination not found")
+// Additional API functions for itinerary generation and suggestions
+export const generateItinerary = async (itineraryData) => {
+  try {
+    const response = await api.post('/generate-itinerary', {
+      destination: itineraryData.destination,
+      startDate: itineraryData.startDate,
+      endDate: itineraryData.endDate,
+      interests: itineraryData.interests,
+      budget: itineraryData.budget,
+    });
+    return response.data.data;
+  } catch (error) {
+    console.error('Error generating itinerary:', error);
+    throw new Error(error.response?.data?.message || 'Failed to generate itinerary');
   }
+};
 
-  const newTransport = {
-    id: nextId++,
-    ...transportData,
+export const getDestinationSuggestions = async (destination) => {
+  try {
+    const response = await api.get(`/suggestions/${destination}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching suggestions:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch suggestions');
   }
+};
 
-  if (!destination.transport) {
-    destination.transport = []
+export const saveItinerary = async (itineraryData) => {
+  try {
+    const response = await api.post('/save-itinerary', itineraryData);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error saving itinerary:', error);
+    throw new Error(error.response?.data?.message || 'Failed to save itinerary');
   }
-  destination.transport.push(newTransport)
+};
 
-  return newTransport
-}
+export const getUserItineraries = async (userId) => {
+  try {
+    const response = await api.get(`/itineraries/${userId}`);
+    return response.data.data;
+  } catch (error) {
+    console.error('Error fetching user itineraries:', error);
+    throw new Error(error.response?.data?.message || 'Failed to fetch itineraries');
+  }
+};

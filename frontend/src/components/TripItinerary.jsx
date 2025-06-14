@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react"
 import { useParams, Link } from "react-router-dom"
-import { ArrowLeft, Plus, Calendar, MapPin } from "lucide-react"
+import { ArrowLeft, Plus, Calendar, MapPin, AlertCircle } from "lucide-react"
 import DestinationCard from "./DestinationCard"
 import DestinationForm from "./DestinationForm"
 import { getTripById, addDestination } from "../services/api"
@@ -12,6 +12,7 @@ export default function TripItinerary() {
   const [trip, setTrip] = useState(null)
   const [showDestinationForm, setShowDestinationForm] = useState(false)
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(null)
 
   useEffect(() => {
     fetchTrip()
@@ -19,10 +20,13 @@ export default function TripItinerary() {
 
   const fetchTrip = async () => {
     try {
+      setLoading(true)
+      setError(null)
       const data = await getTripById(id)
       setTrip(data)
     } catch (error) {
       console.error("Error fetching trip:", error)
+      setError(error.message)
     } finally {
       setLoading(false)
     }
@@ -30,6 +34,7 @@ export default function TripItinerary() {
 
   const handleAddDestination = async (destinationData) => {
     try {
+      setError(null)
       const newDestination = await addDestination(id, destinationData)
       setTrip({
         ...trip,
@@ -38,6 +43,7 @@ export default function TripItinerary() {
       setShowDestinationForm(false)
     } catch (error) {
       console.error("Error adding destination:", error)
+      setError(error.message)
     }
   }
 
@@ -63,6 +69,32 @@ export default function TripItinerary() {
         <div className="text-center">
           <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
           <p className="text-gray-600">Loading trip details...</p>
+        </div>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <AlertCircle className="h-16 w-16 text-red-500 mx-auto mb-4" />
+          <h2 className="text-2xl font-bold text-gray-900 mb-4">Error Loading Trip</h2>
+          <p className="text-gray-600 mb-6">{error}</p>
+          <div className="space-x-4">
+            <button
+              onClick={fetchTrip}
+              className="px-6 py-3 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors"
+            >
+              Try Again
+            </button>
+            <Link
+              to="/trips"
+              className="px-6 py-3 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
+            >
+              Back to Trips
+            </Link>
+          </div>
         </div>
       </div>
     )
@@ -94,7 +126,7 @@ export default function TripItinerary() {
 
           <div className="bg-white rounded-lg shadow-md p-6 mb-6">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">{trip.name}</h1>
-            <p className="text-gray-600 mb-4">{trip.description}</p>
+            {trip.description && <p className="text-gray-600 mb-4">{trip.description}</p>}
 
             <div className="flex items-center space-x-6 text-sm text-gray-500">
               <div className="flex items-center">
@@ -124,6 +156,13 @@ export default function TripItinerary() {
               </div>
             </div>
           )}
+
+          {error && (
+            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg flex items-center">
+              <AlertCircle className="h-5 w-5 text-red-600 mr-2" />
+              <span className="text-red-700">{error}</span>
+            </div>
+          )}
         </div>
 
         <div className="flex justify-between items-center mb-6">
@@ -140,7 +179,7 @@ export default function TripItinerary() {
         {trip.destinations && trip.destinations.length > 0 ? (
           <div className="space-y-6">
             {trip.destinations.map((destination) => (
-              <DestinationCard key={destination.id} destination={destination} />
+              <DestinationCard key={destination._id} destination={{ ...destination, id: destination._id }} />
             ))}
           </div>
         ) : (
