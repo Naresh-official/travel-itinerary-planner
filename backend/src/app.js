@@ -11,7 +11,7 @@ dotenv.config();
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(cors());
+app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
 app.use(express.json());
 
 // Initialize database
@@ -29,14 +29,6 @@ connectDB();
 
 app.use("/api/trips", tripRoutes);
 app.use("/api/destinations", destinationRoutes);
-
-app.get("/api/health", (req, res) => {
-	res.json({
-		message: "Travel Itinerary API is running!",
-		timestamp: new Date().toISOString(),
-		database: "MySQL",
-	});
-});
 
 app.use("*", (req, res) => {
 	res.status(404).json({
@@ -56,7 +48,6 @@ app.use((error, req, res, next) => {
 
 app.listen(PORT, () => {
 	console.log(`Server is running on port ${PORT}`);
-	console.log(`Health check: http://localhost:${PORT}/api/health`);
 });
 
 export default app;

@@ -120,7 +120,10 @@ const addDestinationToTrip = async (req, res) => {
 			});
 		}
 
-		if (arrival < new Date(trip.startDate) || departure > new Date(trip.endDate)) {
+		if (
+			arrival < new Date(trip.startDate) ||
+			departure > new Date(trip.endDate)
+		) {
 			return res.status(400).json({
 				success: false,
 				message: "Destination dates must be within trip dates",

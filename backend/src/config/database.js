@@ -22,27 +22,25 @@ export async function initDatabase() {
 		// Trips table
 		await connection.execute(`
 			CREATE TABLE IF NOT EXISTS trips (
-				id INT PRIMARY KEY AUTO_INCREMENT,
-				name VARCHAR(255) NOT NULL,
-				start_date DATE NOT NULL,
-				end_date DATE NOT NULL,
-				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
-			)
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        start_date DATE NOT NULL,
+        end_date DATE NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+      )
 		`);
 
 		// Destinations table
 		await connection.execute(`
 			CREATE TABLE IF NOT EXISTS destinations (
-				id INT PRIMARY KEY AUTO_INCREMENT,
-				trip_id INT NOT NULL,
-				location VARCHAR(255) NOT NULL,
-				arrival_date DATETIME NOT NULL,
-				departure_date DATETIME NOT NULL,
-				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
-				FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
-			)
+        id INT PRIMARY KEY AUTO_INCREMENT,
+        trip_id INT NOT NULL,
+        location VARCHAR(255) NOT NULL,
+        arrival_date DATETIME NOT NULL,
+        departure_date DATETIME NOT NULL,
+        created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY (trip_id) REFERENCES trips(id) ON DELETE CASCADE
+      )
 		`);
 
 		// Activities table
@@ -54,7 +52,6 @@ export async function initDatabase() {
 				time DATETIME NOT NULL,
 				notes TEXT,
 				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 				FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE
 			)
 		`);
@@ -68,7 +65,6 @@ export async function initDatabase() {
 				details TEXT NOT NULL,
 				time DATETIME NOT NULL,
 				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 				FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE
 			)
 		`);
@@ -83,7 +79,6 @@ export async function initDatabase() {
 				check_out DATETIME NOT NULL,
 				notes TEXT,
 				created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
-				updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
 				FOREIGN KEY (destination_id) REFERENCES destinations(id) ON DELETE CASCADE
 			)
 		`);
