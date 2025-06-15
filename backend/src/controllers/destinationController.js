@@ -1,7 +1,7 @@
-import Destination from "../models/Destination.js";
-import Activity from "../models/Activity.js";
-import Transport from "../models/Transport.js";
-import Accommodation from "../models/Accommodation.js";
+import { Destination } from "../models/Destination.js";
+import { Activity } from "../models/Activity.js";
+import { Transport } from "../models/Transport.js";
+import { Accommodation } from "../models/Accommodation.js";
 
 const addActivity = async (req, res) => {
 	try {
@@ -24,32 +24,27 @@ const addActivity = async (req, res) => {
 		}
 
 		const activityTime = new Date(time);
-		if (
-			activityTime < destination.arrivalDate ||
-			activityTime > destination.departureDate
-		) {
+		const arrivalDate = new Date(destination.arrivalDate);
+		const departureDate = new Date(destination.departureDate);
+
+		if (activityTime < arrivalDate || activityTime > departureDate) {
 			return res.status(400).json({
 				success: false,
 				message: "Activity time must be within destination stay period",
 			});
 		}
 
-		const activity = new Activity({
+		const activity = await Activity.create({
 			destinationId: id,
 			title: title.trim(),
 			time: activityTime,
 			notes: notes.trim(),
 		});
 
-		const savedActivity = await activity.save();
-
-		destination.activities.push(savedActivity._id);
-		await destination.save();
-
 		res.status(201).json({
 			success: true,
 			message: "Activity added successfully",
-			data: savedActivity,
+			data: activity,
 		});
 	} catch (error) {
 		console.error("Add activity error:", error);
@@ -91,22 +86,17 @@ const addTransport = async (req, res) => {
 			});
 		}
 
-		const transport = new Transport({
+		const transport = await Transport.create({
 			destinationId: id,
 			type: type.toLowerCase(),
 			details: details.trim(),
 			time: new Date(time),
 		});
 
-		const savedTransport = await transport.save();
-
-		destination.transport.push(savedTransport._id);
-		await destination.save();
-
 		res.status(201).json({
 			success: true,
 			message: "Transport added successfully",
-			data: savedTransport,
+			data: transport,
 		});
 	} catch (error) {
 		console.error("Add transport error:", error);
@@ -149,10 +139,10 @@ const addAccommodation = async (req, res) => {
 			});
 		}
 
-		if (
-			checkInDate < destination.arrivalDate ||
-			checkOutDate > destination.departureDate
-		) {
+		const arrivalDate = new Date(destination.arrivalDate);
+		const departureDate = new Date(destination.departureDate);
+
+		if (checkInDate < arrivalDate || checkOutDate > departureDate) {
 			return res.status(400).json({
 				success: false,
 				message:
@@ -160,7 +150,7 @@ const addAccommodation = async (req, res) => {
 			});
 		}
 
-		const accommodation = new Accommodation({
+		const accommodation = await Accommodation.create({
 			destinationId: id,
 			placeName: placeName.trim(),
 			checkIn: checkInDate,
@@ -168,15 +158,10 @@ const addAccommodation = async (req, res) => {
 			notes: notes.trim(),
 		});
 
-		const savedAccommodation = await accommodation.save();
-
-		destination.accommodations.push(savedAccommodation._id);
-		await destination.save();
-
 		res.status(201).json({
 			success: true,
 			message: "Accommodation added successfully",
-			data: savedAccommodation,
+			data: accommodation,
 		});
 	} catch (error) {
 		console.error("Add accommodation error:", error);

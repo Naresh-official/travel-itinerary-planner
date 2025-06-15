@@ -1,51 +1,91 @@
-import mongoose from "mongoose";
+import { pool } from "../config/database.js";
 
-const accommodationSchema = new mongoose.Schema(
-	{
-		destinationId: {
-			type: mongoose.Schema.Types.ObjectId,
-			ref: "Destination",
-			required: [true, "Destination ID is required"],
-		},
-		placeName: {
-			type: String,
-			required: [true, "Place name is required"],
-			trim: true,
-			maxlength: [150, "Place name cannot exceed 150 characters"],
-		},
-		checkIn: {
-			type: Date,
-			required: [true, "Check-in date is required"],
-		},
-		checkOut: {
-			type: Date,
-			required: [true, "Check-out date is required"],
-			validate: {
-				validator: function (value) {
-					return value > this.checkIn;
-				},
-				message: "Check-out date must be after check-in date",
-			},
-		},
-		notes: {
-			type: String,
-			trim: true,
-			maxlength: [500, "Notes cannot exceed 500 characters"],
-		},
-	},
-	{
-		timestamps: true,
-		toJSON: { virtuals: true },
-		toObject: { virtuals: true },
+export class Accommodation {
+	static async create({ destinationId, placeName, checkIn, checkOut, notes = "" }) {
+		const [result] = await pool.execute(
+			'INSERT INTO accommodations (destination_id, place_name, check_in, check_out, notes) VALUES (?, ?, ?, ?, ?)',
+			[destinationId, placeName, checkIn, checkOut, notes]
+		);
+		
+		return await this.findById(result.insertId);
 	}
-);
 
-accommodationSchema.virtual("nights").get(function () {
-	const diffTime = Math.abs(this.checkOut - this.checkIn);
-	const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-	return diffDays;
-});
+	static async findById(id) {
+		const [rows] = await pool.execute(`
+			SELECT * FROM accommodations WHERE id = ?
+		`, [id]);
+		
+		if (rows[0]) {
+			const accommodation = {
+				_id: rows[0].id,
+				destinationId: rows[0].destination_id,
+				placeName: rows[0].place_name,
+				checkIn: rows[0].check_in,
+				checkOut: rows[0].check_out,
+				notes: rows[0].notes,
+				createdAt: rows[0].created_at,
+				updatedAt: rows[0].updated_at
+			};
 
-accommodationSchema.index({ destinationId: 1 });
+			// Calculate nights
+			const checkInDate = new Date(accommodation.checkIn);
+			const checkOutDate = new Date(accommodation.checkOut);
+			const diffTime = Math.abs(checkOutDate - checkInDate);
+			accommodation.nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
 
-export default mongoose.model("Accommodation", accommodationSchema);
+			return accommodation;
+		}
+		return null;
+	}
+
+	static async findByDestinationId(destinationId) {
+		const [rows] = await pool.execute(`
+			SELECT * FROM accommodations WHERE destination_id = ? ORDER BY check_in ASC
+		`, [destinationId]);
+
+		return rows.map(row => {
+			const accommodation = {
+				_id: row.id,
+				destinationId: row.destination_id,
+				placeName: row.place_name,
+				checkIn: row.check_in,
+				checkOut: row.check_out,
+				notes: row.notes,
+				createdAt: row.created_at,
+				updatedAt: row.updated_at
+			};
+
+			// Calculate nights
+			const checkInDate = new Date(accommodation.checkIn);
+			const checkOutDate = new Date(accommodation.checkOut);
+			const diffTime = Math.abs(checkOutDate - checkInDate);
+			accommodation.nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+			return accommodation;
+		});
+	}
+
+	static async updateById(id, { placeName, checkIn, checkOut, notes }) {
+		const [result] = await pool.execute(
+			'UPDATE accommodations SET place_name = ?, check_in = ?, check_out = ?, notes = ? WHERE id = ?',
+			[placeName, checkIn, checkOut, notes, id]
+		);
+		return result.affectedRows > 0;
+	}
+
+	static async deleteById(id) {
+		const [result] = await pool.execute(
+			'DELETE FROM accommodations WHERE id = ?',
+			[id]
+		);
+		return result.affectedRows > 0;
+	}
+
+	static async deleteByDestinationId(destinationId) {
+		const [result] = await pool.execute(
+			'DELETE FROM accommodations WHERE destination_id = ?',
+			[destinationId]
+		);
+		return result.affectedRows;
+	}
+}
