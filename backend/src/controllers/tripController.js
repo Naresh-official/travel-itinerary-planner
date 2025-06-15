@@ -1,14 +1,9 @@
-import Trip from "../models/Trip.js";
-import Destination from "../models/Destination.js";
+import { Trip } from "../models/Trip.js";
+import { Destination } from "../models/Destination.js";
 
 const getAllTrips = async (req, res) => {
 	try {
-		const trips = await Trip.find()
-			.populate({
-				path: "destinations",
-				select: "location arrivalDate departureDate",
-			})
-			.sort({ startDate: -1 });
+		const trips = await Trip.findAll();
 
 		res.json({
 			success: true,
@@ -46,18 +41,16 @@ const createTrip = async (req, res) => {
 			});
 		}
 
-		const trip = new Trip({
+		const trip = await Trip.create({
 			name: name.trim(),
 			startDate: start,
 			endDate: end,
 		});
 
-		const savedTrip = await trip.save();
-
 		res.status(201).json({
 			success: true,
 			message: "Trip created successfully",
-			data: savedTrip,
+			data: trip,
 		});
 	} catch (error) {
 		console.error("Create trip error:", error);
@@ -73,14 +66,7 @@ const getTripById = async (req, res) => {
 	try {
 		const { id } = req.params;
 
-		const trip = await Trip.findById(id).populate({
-			path: "destinations",
-			populate: [
-				{ path: "activities", options: { sort: { time: 1 } } },
-				{ path: "transport", options: { sort: { time: 1 } } },
-				{ path: "accommodations", options: { sort: { checkIn: 1 } } },
-			],
-		});
+		const trip = await Trip.findByIdWithDestinations(id);
 
 		if (!trip) {
 			return res.status(404).json({
@@ -134,29 +120,24 @@ const addDestinationToTrip = async (req, res) => {
 			});
 		}
 
-		if (arrival < trip.startDate || departure > trip.endDate) {
+		if (arrival < new Date(trip.startDate) || departure > new Date(trip.endDate)) {
 			return res.status(400).json({
 				success: false,
 				message: "Destination dates must be within trip dates",
 			});
 		}
 
-		const destination = new Destination({
+		const destination = await Destination.create({
 			tripId: id,
 			location: location.trim(),
 			arrivalDate: arrival,
 			departureDate: departure,
 		});
 
-		const savedDestination = await destination.save();
-
-		trip.destinations.push(savedDestination._id);
-		await trip.save();
-
 		res.status(201).json({
 			success: true,
 			message: "Destination added successfully",
-			data: savedDestination,
+			data: destination,
 		});
 	} catch (error) {
 		console.error("Add destination error:", error);
